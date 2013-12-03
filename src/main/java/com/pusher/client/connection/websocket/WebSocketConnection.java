@@ -134,7 +134,7 @@ public class WebSocketConnection implements InternalConnection, WebSocketListene
     /* implementation detail */
 
     private void updateState(ConnectionState newState) {
-        log.debug("State transition requested, current [" + state + "], new [" + newState + "]");
+        System.out.println("State transition requested, current [" + state + "], new [" + newState + "]");
 
         final ConnectionStateChange change = new ConnectionStateChange(state, newState);
         this.state = newState;
@@ -173,9 +173,16 @@ public class WebSocketConnection implements InternalConnection, WebSocketListene
 
     @SuppressWarnings("rawtypes")
     private void handleConnectionMessage(String message) {
-        Map jsonObject = new Gson().fromJson(message, Map.class);
-        String dataString = (String) jsonObject.get("data");
-        Map dataMap = new Gson().fromJson(dataString, Map.class);
+        Map json = new Gson().fromJson(message, Map.class);
+        Object data = json.get("data");
+
+        Map dataMap;
+        if (data instanceof String) {
+                dataMap = new Gson().fromJson(((String) data), Map.class);
+        } else {
+                dataMap = (Map) data;
+        }
+
         socketId = (String) dataMap.get("socket_id");
 
         updateState(ConnectionState.CONNECTED);
@@ -261,7 +268,7 @@ public class WebSocketConnection implements InternalConnection, WebSocketListene
                     }
                     factory.shutdownEventQueue();
                 } else {
-                    log.error("Received close from underlying socket when already disconnected. "
+                    System.out.println("Received close from underlying socket when already disconnected. "
                             + "Close code [" + code + "], Reason [" + reason + "], Remote [" + remote + "]");
                 }
             }
@@ -290,7 +297,7 @@ public class WebSocketConnection implements InternalConnection, WebSocketListene
             if (state == ConnectionState.CONNECTED) {
                 long nextCheck;
                 if (lastActivity + activityTimeout < timeNow) {
-                    log.debug("Sending ping message");
+                    System.out.println("Sending ping message");
                     sendMessage(PING_EVENT_SERIALIZED);
 
                     ScheduledFuture<?> future = factory.getEventQueue().schedule(new PongCheck(timeNow), pongTimeout, TimeUnit.MILLISECONDS);
@@ -328,7 +335,7 @@ public class WebSocketConnection implements InternalConnection, WebSocketListene
         @Override
         public void run() {
             if (lastPong < pingSent) {
-                log.info("Timed out awaiting pong response from server. Moving to disconnected state.");
+                System.out.println("Timed out awaiting pong response from server. Moving to disconnected state.");
                 disconnect();
             }
         }

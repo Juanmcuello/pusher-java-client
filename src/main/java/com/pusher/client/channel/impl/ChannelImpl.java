@@ -173,7 +173,7 @@ public class ChannelImpl implements InternalChannel {
     private String extractDataFrom(String message) {
         Gson gson = new Gson();
         Map<Object, Object> jsonObject = gson.fromJson(message, Map.class);
-        return (String) jsonObject.get("data");
+        return gson.toJson(jsonObject.get("data"));
     }
 
     protected String[] getDisallowedNameExpressions() {
